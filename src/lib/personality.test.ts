@@ -8,6 +8,8 @@ describe('Personality Logic', () => {
             expect(shouldTriggerProfile('Tell me about myself')).toBe(true)
             expect(shouldTriggerProfile('my personality is interesting')).toBe(true)
             expect(shouldTriggerProfile('analyze me please')).toBe(true)
+            expect(shouldTriggerProfile('describe me')).toBe(true)
+            expect(shouldTriggerProfile('what have you learned about me?')).toBe(true)
         })
 
         it('should not trigger for regular messages', () => {
@@ -25,18 +27,21 @@ describe('Personality Logic', () => {
     describe('getSystemPrompt', () => {
         it('should return profile prompt when triggered', () => {
             const profilePrompt = getSystemPrompt(true)
-            expect(profilePrompt).toContain('expert psychologist')
+            expect(profilePrompt).toContain('personality analyst')
+            expect(profilePrompt).toContain('Personality Profile')
+            expect(profilePrompt).toContain('Communication Style')
         })
 
         it('should return normal prompt when not triggered', () => {
             const normalPrompt = getSystemPrompt(false)
-            expect(normalPrompt).toContain('helpful AI assistant')
+            expect(normalPrompt).toContain('helpful')
+            expect(normalPrompt).toContain('friendly')
         })
 
-        it('should have different prompts for each mode', () => {
+        it('should explicitly instruct to analyze chat history', () => {
             const profilePrompt = getSystemPrompt(true)
-            const normalPrompt = getSystemPrompt(false)
-            expect(profilePrompt).not.toBe(normalPrompt)
+            expect(profilePrompt).toContain('conversation history')
+            expect(profilePrompt).toContain('NEVER say you don\'t have access')
         })
     })
 })
