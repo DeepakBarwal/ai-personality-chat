@@ -42,6 +42,11 @@ A Next.js AI Chatbot that learns from your conversations and generates personali
    DATABASE_URL="postgresql://user:password@host:5432/db"
    AUTH_SECRET="your-secret-key"
    OPENAI_API_KEY="sk-..."
+   
+   # Demo user credentials (for seeding)
+   DEMO_USER_EMAIL="your-demo@email.com"
+   DEMO_USER_PASSWORD="your-secure-password"
+   DEMO_USER_NAME="Demo User"
    ```
 
 3. **Database Setup**:
@@ -55,10 +60,10 @@ A Next.js AI Chatbot that learns from your conversations and generates personali
    npm run dev
    ```
 
-## 🔑 Demo Credentials
+## 🔑 Authentication
 
-- **Email**: `demo@example.com`
-- **Password**: `password123`
+Demo credentials are configured via environment variables and provided separately for security.
+See the submission notes for login details.
 
 ## 📚 API Documentation
 
@@ -109,7 +114,7 @@ npx vitest run
 ai-personality-chat/
 ├── prisma/
 │   ├── schema.prisma          # Database schema
-│   └── seed.ts                # Demo user seeding
+│   └── seed.ts                # Demo user seeding (gitignored)
 ├── public/
 │   └── openapi.json           # OpenAPI 3.1 specification
 ├── src/
@@ -119,20 +124,13 @@ ai-personality-chat/
 │   │   │   ├── chat/route.ts                # Chat streaming
 │   │   │   └── feedback/route.ts            # Feedback CRUD
 │   │   ├── chat/page.tsx      # Chat page
-│   │   ├── docs/page.tsx      # API documentation (Scalar)
+│   │   ├── docs/route.ts      # API documentation (Scalar)
 │   │   ├── login/page.tsx     # Login page
 │   │   ├── layout.tsx         # Root layout
 │   │   └── globals.css        # Global styles
 │   ├── components/
 │   │   ├── chat-interface.tsx # Main chat component
 │   │   └── ui/                # Shadcn UI components
-│   │       ├── avatar.tsx
-│   │       ├── badge.tsx
-│   │       ├── button.tsx
-│   │       ├── card.tsx
-│   │       ├── input.tsx
-│   │       ├── scroll-area.tsx
-│   │       └── skeleton.tsx
 │   ├── lib/
 │   │   ├── personality.ts     # Profile triggers & prompts
 │   │   ├── personality.test.ts # Unit tests

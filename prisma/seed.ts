@@ -4,21 +4,35 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-  const email = 'demo@example.com'
-  const password = 'password123'
+  // Read credentials from environment variables
+  const email = process.env.DEMO_USER_EMAIL
+  const password = process.env.DEMO_USER_PASSWORD
+  const name = process.env.DEMO_USER_NAME || 'Demo User'
+
+  if (!email || !password) {
+    console.error('Error: DEMO_USER_EMAIL and DEMO_USER_PASSWORD must be set in environment variables')
+    console.log('Example:')
+    console.log('  DEMO_USER_EMAIL=your@email.com')
+    console.log('  DEMO_USER_PASSWORD=your-secure-password')
+    process.exit(1)
+  }
+
   const hashedPassword = await bcrypt.hash(password, 10)
 
   const user = await prisma.user.upsert({
     where: { email },
-    update: {},
+    update: {
+      password: hashedPassword,
+      name,
+    },
     create: {
       email,
-      name: 'Demo User',
+      name,
       password: hashedPassword,
     },
   })
 
-  console.log({ user })
+  console.log('Demo user created/updated:', { email: user.email, name: user.name })
 }
 
 main()

@@ -47,9 +47,8 @@ export default function LoginPage() {
                                     id="email"
                                     type="email"
                                     name="email"
-                                    placeholder="demo@example.com"
+                                    placeholder="Enter your email"
                                     required
-                                    defaultValue="demo@example.com"
                                     className="pl-10 py-6 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500"
                                 />
                             </div>
@@ -65,8 +64,8 @@ export default function LoginPage() {
                                     id="password"
                                     type="password"
                                     name="password"
+                                    placeholder="Enter your password"
                                     required
-                                    defaultValue="password123"
                                     className="pl-10 py-6 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-500 rounded-xl focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500"
                                 />
                             </div>
@@ -96,13 +95,6 @@ export default function LoginPage() {
                             )}
                         </Button>
                     </form>
-
-                    {/* Demo credentials hint */}
-                    <div className="mt-6 pt-6 border-t border-slate-800">
-                        <p className="text-xs text-slate-500 text-center">
-                            Demo credentials are pre-filled for easy access
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
