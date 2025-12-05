@@ -1,5 +1,17 @@
 # API Documentation
 
+## Interactive Documentation
+
+📚 **Scalar API Docs**: [http://localhost:3000/docs](http://localhost:3000/docs)
+
+The interactive API explorer provides:
+- Dark mode UI
+- Try-it-out requests
+- Request/response examples
+- Schema definitions
+
+---
+
 ## Authentication
 
 All API routes require authentication via NextAuth session cookie.
@@ -147,5 +159,14 @@ model Feedback {
 | Status | Description |
 |--------|-------------|
 | 401 | Unauthorized - No valid session |
+| 400 | Bad request - Invalid input |
 | 404 | User or Message not found |
 | 500 | Internal server error |
+
+---
+
+## OpenAPI Specification
+
+The full OpenAPI 3.1 specification is available at:
+- **JSON**: `/openapi.json`
+- **Interactive**: `/docs`

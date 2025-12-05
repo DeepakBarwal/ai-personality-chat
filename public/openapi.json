@@ -1,0 +1,442 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "AI Personality Chat API",
+        "description": "API for an AI chatbot that learns from conversations and generates personality profiles.",
+        "version": "1.0.0",
+        "contact": {
+            "name": "API Support"
+        }
+    },
+    "servers": [
+        {
+            "url": "http://localhost:3000",
+            "description": "Development server"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Chat",
+            "description": "Chat streaming endpoints"
+        },
+        {
+            "name": "Feedback",
+            "description": "Message feedback endpoints"
+        },
+        {
+            "name": "Auth",
+            "description": "Authentication endpoints"
+        }
+    ],
+    "paths": {
+        "/api/chat": {
+            "post": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Send a chat message",
+                "description": "Streams an AI response. Detects personality profile requests and incorporates user feedback into responses.",
+                "operationId": "sendChatMessage",
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChatRequest"
+                            },
+                            "example": {
+                                "messages": [
+                                    {
+                                        "role": "user",
+                                        "content": "Hello!"
+                                    },
+                                    {
+                                        "role": "assistant",
+                                        "content": "Hi there! How can I help you today?"
+                                    },
+                                    {
+                                        "role": "user",
+                                        "content": "Who am I?"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Streaming text response",
+                        "content": {
+                            "text/event-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Server-sent events stream of AI response text"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized - No valid session",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "example": "Unauthorized"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "example": "User not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/feedback": {
+            "post": {
+                "tags": [
+                    "Feedback"
+                ],
+                "summary": "Submit feedback for a message",
+                "description": "Save or update feedback (thumbs up/down) for an AI message. Feedback is used to improve future responses.",
+                "operationId": "submitFeedback",
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FeedbackRequest"
+                            },
+                            "example": {
+                                "messageId": "clx1234567890",
+                                "content": "Hello! How can I help you today?",
+                                "rating": "up"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Feedback saved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FeedbackResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid rating value",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Message not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Feedback"
+                ],
+                "summary": "Remove feedback for a message",
+                "description": "Delete existing feedback for a message.",
+                "operationId": "deleteFeedback",
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DeleteFeedbackRequest"
+                            },
+                            "example": {
+                                "messageId": "clx1234567890",
+                                "content": "Hello! How can I help you today?"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Feedback deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/signin": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Sign in page",
+                "description": "NextAuth.js sign in page",
+                "operationId": "signIn",
+                "responses": {
+                    "200": {
+                        "description": "Sign in page HTML"
+                    }
+                }
+            }
+        },
+        "/api/auth/signout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Sign out",
+                "description": "Sign out the current user",
+                "operationId": "signOut",
+                "security": [
+                    {
+                        "sessionAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully signed out"
+                    }
+                }
+            }
+        },
+        "/api/auth/session": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Get session",
+                "description": "Get the current user session",
+                "operationId": "getSession",
+                "responses": {
+                    "200": {
+                        "description": "Current session data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Session"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "sessionAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "authjs.session-token",
+                "description": "NextAuth.js session cookie"
+            }
+        },
+        "schemas": {
+            "Message": {
+                "type": "object",
+                "required": [
+                    "role",
+                    "content"
+                ],
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "enum": [
+                            "user",
+                            "assistant"
+                        ],
+                        "description": "The role of the message sender"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "The message content"
+                    }
+                }
+            },
+            "ChatRequest": {
+                "type": "object",
+                "required": [
+                    "messages"
+                ],
+                "properties": {
+                    "messages": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Message"
+                        },
+                        "description": "Array of conversation messages"
+                    }
+                }
+            },
+            "FeedbackRequest": {
+                "type": "object",
+                "required": [
+                    "messageId",
+                    "rating"
+                ],
+                "properties": {
+                    "messageId": {
+                        "type": "string",
+                        "description": "The ID of the message to provide feedback for"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Message content (used as fallback for lookup)"
+                    },
+                    "rating": {
+                        "type": "string",
+                        "enum": [
+                            "up",
+                            "down"
+                        ],
+                        "description": "Feedback rating - 'up' for helpful, 'down' for unhelpful"
+                    }
+                }
+            },
+            "DeleteFeedbackRequest": {
+                "type": "object",
+                "required": [
+                    "messageId"
+                ],
+                "properties": {
+                    "messageId": {
+                        "type": "string",
+                        "description": "The ID of the message to remove feedback from"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Message content (used as fallback for lookup)"
+                    }
+                }
+            },
+            "FeedbackResponse": {
+                "type": "object",
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "feedback": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "messageId": {
+                                "type": "string"
+                            },
+                            "rating": {
+                                "type": "string",
+                                "enum": [
+                                    "up",
+                                    "down"
+                                ]
+                            },
+                            "createdAt": {
+                                "type": "string",
+                                "format": "date-time"
+                            }
+                        }
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string",
+                        "description": "Error message"
+                    }
+                }
+            },
+            "Session": {
+                "type": "object",
+                "properties": {
+                    "user": {
+                        "type": "object",
+                        "properties": {
+                            "name": {
+                                "type": "string"
+                            },
+                            "email": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "expires": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            }
+        }
+    }
+}

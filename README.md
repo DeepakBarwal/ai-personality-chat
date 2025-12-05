@@ -11,6 +11,7 @@ A Next.js AI Chatbot that learns from your conversations and generates personali
 - **Markdown Rendering** - AI responses with full markdown support
 - **Response Regeneration** - Regenerate responses with automatic cleanup
 - **Secure Authentication** - NextAuth.js with credentials provider
+- **Interactive API Docs** - Scalar-powered OpenAPI documentation
 
 ## 🛠 Tech Stack
 
@@ -23,6 +24,7 @@ A Next.js AI Chatbot that learns from your conversations and generates personali
 | Auth | NextAuth.js v5 |
 | AI | Vercel AI SDK + OpenAI GPT-4 |
 | Testing | Vitest |
+| API Docs | Scalar (OpenAPI 3.1) |
 
 ## DB Diagram
 
@@ -58,6 +60,22 @@ A Next.js AI Chatbot that learns from your conversations and generates personali
 - **Email**: `demo@example.com`
 - **Password**: `password123`
 
+## 📚 API Documentation
+
+Interactive API documentation is available at:
+
+```
+http://localhost:3000/docs
+```
+
+Features:
+- Modern Scalar UI with dark mode
+- Interactive API explorer
+- Request/response examples
+- Search with Cmd/Ctrl+K
+
+See [API_DOCS.md](./API_DOCS.md) for detailed endpoint documentation.
+
 ## 💡 How It Works
 
 ### Personality Profiles
@@ -92,6 +110,8 @@ ai-personality-chat/
 ├── prisma/
 │   ├── schema.prisma          # Database schema
 │   └── seed.ts                # Demo user seeding
+├── public/
+│   └── openapi.json           # OpenAPI 3.1 specification
 ├── src/
 │   ├── app/
 │   │   ├── api/
@@ -99,6 +119,7 @@ ai-personality-chat/
 │   │   │   ├── chat/route.ts                # Chat streaming
 │   │   │   └── feedback/route.ts            # Feedback CRUD
 │   │   ├── chat/page.tsx      # Chat page
+│   │   ├── docs/page.tsx      # API documentation (Scalar)
 │   │   ├── login/page.tsx     # Login page
 │   │   ├── layout.tsx         # Root layout
 │   │   └── globals.css        # Global styles
@@ -120,7 +141,7 @@ ai-personality-chat/
 │   ├── auth.ts                # NextAuth config
 │   ├── auth.config.ts         # Auth edge config
 │   └── middleware.ts          # Route protection
-├── API_DOCS.md                # API documentation
+├── API_DOCS.md                # API documentation (markdown)
 ├── README.md                  # This file
 └── package.json
 ```
@@ -135,3 +156,11 @@ User ──< Conversation ──< Message ──○ Feedback
 - **Conversation**: id, userId
 - **Message**: id, conversationId, role, content
 - **Feedback**: id, messageId, rating (up/down)
+
+## 🌐 Deployment
+
+This app is Vercel-ready. Set environment variables in Vercel dashboard and deploy.
+
+```bash
+vercel
+```
