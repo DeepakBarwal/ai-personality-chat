@@ -15,17 +15,26 @@ export default async function ChatPage() {
     })
 
     let initialMessages: any[] = []
+    let initialFeedback: Record<string, 'up' | 'down' | null> = {}
+
     if (user?.conversations[0]) {
         const messages = await prisma.message.findMany({
             where: { conversationId: user.conversations[0].id },
             orderBy: { createdAt: 'asc' },
-            take: 50
+            take: 50,
+            include: { feedback: true }
         })
         initialMessages = messages.map(m => ({
             id: m.id,
             role: m.role,
             content: m.content
         }))
+        // Build initial feedback state
+        messages.forEach(m => {
+            if (m.feedback) {
+                initialFeedback[m.id] = m.feedback.rating as 'up' | 'down'
+            }
+        })
     }
 
     return (
@@ -38,7 +47,7 @@ export default async function ChatPage() {
                     </div>
                     <div>
                         <h1 className="text-lg font-semibold text-white">AI Personality Chat</h1>
-                        <p className="text-xs text-slate-400">Discover who you are</p>
+                        <p className="text-xs text-slate-400">Learns from your feedback</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -65,7 +74,7 @@ export default async function ChatPage() {
 
             {/* Main Chat Area */}
             <main className="flex-1 overflow-hidden">
-                <ChatInterface initialMessages={initialMessages} />
+                <ChatInterface initialMessages={initialMessages} initialFeedback={initialFeedback} />
             </main>
         </div>
     )

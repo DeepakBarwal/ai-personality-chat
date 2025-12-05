@@ -37,7 +37,18 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   role           String       // 'user' or 'assistant'
   content        String
+  feedback       Feedback?
   createdAt      DateTime     @default(now())
 
   @@index([conversationId])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  messageId String   @unique
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  rating    String   // 'up' or 'down'
+  createdAt DateTime @default(now())
+
+  @@index([messageId])
 }

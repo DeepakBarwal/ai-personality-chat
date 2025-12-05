@@ -35,25 +35,93 @@ export async function POST(req: Request) {
         })
     }
 
-    // Save user message
-    await prisma.message.create({
-        data: {
-            conversationId: conversation.id,
-            role: 'user',
-            content: lastMessage.content
-        }
+    // Check if this is a regenerate request by checking if last message already exists in DB
+    const existingMessages = await prisma.message.findMany({
+        where: { conversationId: conversation.id },
+        orderBy: { createdAt: 'desc' },
+        take: 2
     })
+
+    const isRegenerate = existingMessages.length >= 2 &&
+        existingMessages[1]?.content === lastMessage.content &&
+        existingMessages[1]?.role === 'user'
+
+    if (isRegenerate) {
+        // Delete the last assistant message (we're regenerating it)
+        const lastAssistantMsg = existingMessages[0]
+        if (lastAssistantMsg?.role === 'assistant') {
+            // Also delete any feedback for this message
+            await prisma.feedback.deleteMany({
+                where: { messageId: lastAssistantMsg.id }
+            })
+            await prisma.message.delete({
+                where: { id: lastAssistantMsg.id }
+            })
+        }
+    } else {
+        // Save new user message only if not regenerating
+        await prisma.message.create({
+            data: {
+                conversationId: conversation.id,
+                role: 'user',
+                content: lastMessage.content
+            }
+        })
+    }
 
     // Check for personality trigger
     const isProfileRequest = shouldTriggerProfile(lastMessage.content)
-    const systemPrompt = getSystemPrompt(isProfileRequest)
 
-    // Fetch history for context (last 50 messages)
+    // Fetch history with feedback for context (last 50 messages)
     const history = await prisma.message.findMany({
         where: { conversationId: conversation.id },
         orderBy: { createdAt: 'asc' },
-        take: 50
+        take: 50,
+        include: { feedback: true }
     })
+
+    // Analyze feedback patterns
+    const feedbackStats = history.reduce((acc, m) => {
+        if (m.feedback) {
+            if (m.feedback.rating === 'up') acc.liked++
+            else acc.disliked++
+        }
+        return acc
+    }, { liked: 0, disliked: 0 })
+
+    // Get recently disliked messages to understand what to avoid
+    const dislikedMessages = history
+        .filter(m => m.feedback?.rating === 'down')
+        .slice(-3)
+        .map(m => m.content.slice(0, 100))
+
+    // Get recently liked messages to understand what works
+    const likedMessages = history
+        .filter(m => m.feedback?.rating === 'up')
+        .slice(-3)
+        .map(m => m.content.slice(0, 100))
+
+    // Build enhanced system prompt with feedback context
+    let systemPrompt = getSystemPrompt(isProfileRequest)
+
+    if (feedbackStats.liked > 0 || feedbackStats.disliked > 0) {
+        systemPrompt += `\n\n--- FEEDBACK CONTEXT ---
+The user has provided feedback on ${feedbackStats.liked + feedbackStats.disliked} responses:
+- ${feedbackStats.liked} responses were marked as helpful
+- ${feedbackStats.disliked} responses were marked as unhelpful`
+
+        if (likedMessages.length > 0) {
+            systemPrompt += `\n\nExamples of responses the user found helpful (try to match this style):
+${likedMessages.map((m, i) => `${i + 1}. "${m}..."`).join('\n')}`
+        }
+
+        if (dislikedMessages.length > 0) {
+            systemPrompt += `\n\nExamples of responses the user didn't like (avoid this style):
+${dislikedMessages.map((m, i) => `${i + 1}. "${m}..."`).join('\n')}`
+        }
+
+        systemPrompt += '\n\nUse this feedback to improve your responses. Be more like the helpful examples and avoid patterns from unhelpful ones.'
+    }
 
     // Convert to OpenAI messages
     const coreMessages = history.map(m => ({
