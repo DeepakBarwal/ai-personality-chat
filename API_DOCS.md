@@ -27,7 +27,7 @@ Streams a chat response from the AI model.
 1. Detects if request is a regeneration (same last user message exists in DB)
 2. For regenerations: deletes previous assistant response and its feedback
 3. For new messages: saves user message to database
-4. Checks for personality trigger phrases ("who am i", "tell me about myself", etc.)
+4. Checks for personality trigger phrases
 5. Fetches conversation history with feedback data
 6. Builds system prompt with:
    - Personality analysis instructions (if triggered)
@@ -103,29 +103,49 @@ NextAuth.js authentication endpoints (SignIn, SignOut, Session).
 
 ```prisma
 model User {
-  id            String         @id
+  id            String         @id @default(cuid())
+  name          String?
   email         String?        @unique
   password      String?
   conversations Conversation[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Conversation {
-  id       String    @id
-  userId   String
-  messages Message[]
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(...)
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Message {
-  id             String    @id
+  id             String       @id @default(cuid())
   conversationId String
-  role           String    // 'user' | 'assistant'
+  conversation   Conversation @relation(...)
+  role           String       // 'user' | 'assistant'
   content        String
   feedback       Feedback?
+  createdAt      DateTime     @default(now())
 }
 
 model Feedback {
-  id        String @id
-  messageId String @unique
-  rating    String // 'up' | 'down'
+  id        String   @id @default(cuid())
+  messageId String   @unique
+  message   Message  @relation(...)
+  rating    String   // 'up' | 'down'
+  createdAt DateTime @default(now())
 }
 ```
+
+---
+
+## Error Responses
+
+| Status | Description |
+|--------|-------------|
+| 401 | Unauthorized - No valid session |
+| 404 | User or Message not found |
+| 500 | Internal server error |

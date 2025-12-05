@@ -14,12 +14,19 @@ A Next.js AI Chatbot that learns from your conversations and generates personali
 
 ## 🛠 Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS + Shadcn UI
-- **Database**: Prisma ORM + PostgreSQL
-- **Auth**: NextAuth.js v5
-- **AI**: Vercel AI SDK + OpenAI GPT-4
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS + Shadcn UI |
+| Database | Prisma ORM + PostgreSQL |
+| Auth | NextAuth.js v5 |
+| AI | Vercel AI SDK + OpenAI GPT-4 |
+| Testing | Vitest |
+
+## DB Diagram
+
+![Database Diagram](./db.png)
 
 ## 🚀 Setup
 
@@ -60,8 +67,9 @@ After chatting, ask any of these:
 - "Analyze me"
 - "Describe me"
 - "What have you learned about me?"
+- "Profile me"
 
-The AI analyzes your communication style, interests, and traits to generate a structured profile.
+The AI analyzes your communication style, interests, and traits to generate a structured profile with emoji headers.
 
 ### Feedback System
 1. Chat with the AI
@@ -80,16 +88,50 @@ npx vitest run
 ## 📁 Project Structure
 
 ```
-src/
-├── app/
-│   ├── api/
-│   │   ├── chat/route.ts      # Chat streaming endpoint
-│   │   └── feedback/route.ts  # Feedback CRUD
-│   ├── chat/page.tsx          # Chat page
-│   └── login/page.tsx         # Login page
-├── components/
-│   └── chat-interface.tsx     # Main chat component
-└── lib/
-    ├── personality.ts         # Profile trigger & prompts
-    └── prisma.ts              # Database client
+ai-personality-chat/
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   └── seed.ts                # Demo user seeding
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── auth/[...nextauth]/route.ts  # Auth endpoints
+│   │   │   ├── chat/route.ts                # Chat streaming
+│   │   │   └── feedback/route.ts            # Feedback CRUD
+│   │   ├── chat/page.tsx      # Chat page
+│   │   ├── login/page.tsx     # Login page
+│   │   ├── layout.tsx         # Root layout
+│   │   └── globals.css        # Global styles
+│   ├── components/
+│   │   ├── chat-interface.tsx # Main chat component
+│   │   └── ui/                # Shadcn UI components
+│   │       ├── avatar.tsx
+│   │       ├── badge.tsx
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       ├── input.tsx
+│   │       ├── scroll-area.tsx
+│   │       └── skeleton.tsx
+│   ├── lib/
+│   │   ├── personality.ts     # Profile triggers & prompts
+│   │   ├── personality.test.ts # Unit tests
+│   │   ├── prisma.ts          # Prisma client
+│   │   └── utils.ts           # Utility functions
+│   ├── auth.ts                # NextAuth config
+│   ├── auth.config.ts         # Auth edge config
+│   └── middleware.ts          # Route protection
+├── API_DOCS.md                # API documentation
+├── README.md                  # This file
+└── package.json
 ```
+
+## 📊 Database Schema
+
+```
+User ──< Conversation ──< Message ──○ Feedback
+```
+
+- **User**: id, name, email, password
+- **Conversation**: id, userId
+- **Message**: id, conversationId, role, content
+- **Feedback**: id, messageId, rating (up/down)

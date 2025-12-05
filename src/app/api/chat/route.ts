@@ -3,12 +3,15 @@ import { OpenAIStream, StreamingTextResponse } from 'ai'
 import { auth } from '@/auth'
 import prisma from '@/lib/prisma'
 import { shouldTriggerProfile, getSystemPrompt } from '@/lib/personality'
+import type { Message, Feedback } from '@prisma/client'
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 })
 
 export const maxDuration = 30
+
+type MessageWithFeedback = Message & { feedback: Feedback | null }
 
 export async function POST(req: Request) {
     const session = await auth()
@@ -73,7 +76,7 @@ export async function POST(req: Request) {
     const isProfileRequest = shouldTriggerProfile(lastMessage.content)
 
     // Fetch history with feedback for context (last 50 messages)
-    const history = await prisma.message.findMany({
+    const history: MessageWithFeedback[] = await prisma.message.findMany({
         where: { conversationId: conversation.id },
         orderBy: { createdAt: 'asc' },
         take: 50,
@@ -81,25 +84,28 @@ export async function POST(req: Request) {
     })
 
     // Analyze feedback patterns
-    const feedbackStats = history.reduce((acc, m) => {
-        if (m.feedback) {
-            if (m.feedback.rating === 'up') acc.liked++
-            else acc.disliked++
-        }
-        return acc
-    }, { liked: 0, disliked: 0 })
+    const feedbackStats = history.reduce(
+        (acc: { liked: number; disliked: number }, m: MessageWithFeedback) => {
+            if (m.feedback) {
+                if (m.feedback.rating === 'up') acc.liked++
+                else acc.disliked++
+            }
+            return acc
+        },
+        { liked: 0, disliked: 0 }
+    )
 
     // Get recently disliked messages to understand what to avoid
     const dislikedMessages = history
-        .filter(m => m.feedback?.rating === 'down')
+        .filter((m: MessageWithFeedback) => m.feedback?.rating === 'down')
         .slice(-3)
-        .map(m => m.content.slice(0, 100))
+        .map((m: MessageWithFeedback) => m.content.slice(0, 100))
 
     // Get recently liked messages to understand what works
     const likedMessages = history
-        .filter(m => m.feedback?.rating === 'up')
+        .filter((m: MessageWithFeedback) => m.feedback?.rating === 'up')
         .slice(-3)
-        .map(m => m.content.slice(0, 100))
+        .map((m: MessageWithFeedback) => m.content.slice(0, 100))
 
     // Build enhanced system prompt with feedback context
     let systemPrompt = getSystemPrompt(isProfileRequest)
@@ -112,19 +118,19 @@ The user has provided feedback on ${feedbackStats.liked + feedbackStats.disliked
 
         if (likedMessages.length > 0) {
             systemPrompt += `\n\nExamples of responses the user found helpful (try to match this style):
-${likedMessages.map((m, i) => `${i + 1}. "${m}..."`).join('\n')}`
+${likedMessages.map((m: string, i: number) => `${i + 1}. "${m}..."`).join('\n')}`
         }
 
         if (dislikedMessages.length > 0) {
             systemPrompt += `\n\nExamples of responses the user didn't like (avoid this style):
-${dislikedMessages.map((m, i) => `${i + 1}. "${m}..."`).join('\n')}`
+${dislikedMessages.map((m: string, i: number) => `${i + 1}. "${m}..."`).join('\n')}`
         }
 
         systemPrompt += '\n\nUse this feedback to improve your responses. Be more like the helpful examples and avoid patterns from unhelpful ones.'
     }
 
     // Convert to OpenAI messages
-    const coreMessages = history.map(m => ({
+    const coreMessages = history.map((m: MessageWithFeedback) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content
     }))
@@ -138,8 +144,8 @@ ${dislikedMessages.map((m, i) => `${i + 1}. "${m}..."`).join('\n')}`
         ],
     })
 
-    const stream = OpenAIStream(response, {
-        onCompletion: async (completion) => {
+    const stream = OpenAIStream(response as any, {
+        onCompletion: async (completion: string) => {
             await prisma.message.create({
                 data: {
                     conversationId: conversation.id,
